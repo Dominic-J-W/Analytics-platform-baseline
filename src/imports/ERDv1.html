@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ERD V1</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.0/mermaid.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:         #0a0c0e;
+  --surface:    #0f1214;
+  --surface2:   #141719;
+  --surface3:   #1a1e21;
+  --border:     #252b2f;
+  --border2:    #1e2428;
+  --amber:      #0ed841;
+  --amber-dim:  #92610a;
+  --amber-glow: rgba(245,158,11,0.08);
+  --amber-glow2:rgba(245,158,11,0.15);
+  --green:      #22c55e;
+  --green-dim:  rgba(34,197,94,0.1);
+  --red:        #ef4444;
+  --red-dim:    rgba(239,68,68,0.1);
+  --blue:       #38bdf8;
+  --blue-dim:   rgba(56,189,248,0.1);
+  --purple:     #a78bfa;
+  --text:       #d4d8db;
+  --text2:      #8a9099;
+  --text3:      #4a5159;
+  --mono:       'IBM Plex Mono', monospace;
+  --sans:       'IBM Plex Sans', sans-serif;
+}
+
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.03) 2px,
+    rgba(0,0,0,0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  height: 52px;
+  position: relative;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 24px;
+  border-right: 1px solid var(--border);
+  height: 100%;
+}
+
+.brand-name {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  color: var(--amber);
+  text-transform: uppercase;
+}
+
+.header-meta {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  height: 100%;
+  flex: 1;
+}
+
+.meta-item {
+  padding: 0 20px;
+  border-right: 1px solid var(--border);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.meta-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--text3);
+  text-transform: uppercase;
+}
+
+.meta-value {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text2);
+}
+
+.meta-value.highlight { color: var(--amber); }
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  margin-left: auto;
+  height: 100%;
+  border-left: 1px solid var(--border);
+}
+
+.ctrl-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: all .12s;
+  letter-spacing: .5px;
+}
+.ctrl-btn:hover { border-color: var(--amber); color: var(--amber); background: var(--amber-glow); }
+
+.zoom-display {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+  min-width: 42px;
+  text-align: center;
+}
+
+.section-bar {
+  display: flex;
+  align-items: stretch;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  height: 38px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.section-bar::-webkit-scrollbar { display: none; }
+
+.sec-btn {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0 18px;
+  border: none;
+  border-right: 1px solid var(--border);
+  background: transparent;
+  color: var(--text3);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .12s;
+  position: relative;
+}
+.sec-btn:hover { color: var(--text2); background: var(--surface3); }
+.sec-btn.active {
+  color: var(--amber);
+  background: var(--amber-glow);
+}
+.sec-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--amber);
+}
+
+.main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.canvas-wrap {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  cursor: crosshair;
+  background: var(--bg);
+  background-image:
+    linear-gradient(var(--border2) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border2) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+.canvas-wrap.panning { cursor: grabbing; }
+
+#diagram-container {
+  position: absolute;
+  top: 0; left: 0;
+  transform-origin: 0 0;
+  padding: 60px;
+}
+
+.mermaid svg { max-width: none !important; }
+
+#loading {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 16px;
+  background: var(--bg);
+  z-index: 50;
+}
+
+.load-ring {
+  width: 36px; height: 36px;
+  border: 2px solid var(--border);
+  border-top-color: var(--amber);
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.load-text {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--text3);
+  text-transform: uppercase;
+}
+
+.detail-panel {
+  width: 320px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width .2s ease;
+}
+.detail-panel.collapsed { width: 0; border-left: none; }
+
+.panel-header {
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.panel-eyebrow {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text3);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.panel-title {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--amber);
+  letter-spacing: .5px;
+}
+
+.panel-desc {
+  font-size: 11px;
+  color: var(--text2);
+  line-height: 1.6;
+  margin-top: 8px;
+}
+
+.panel-body {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.col-section-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text3);
+  text-transform: uppercase;
+  padding: 12px 18px 6px;
+  border-bottom: 1px solid var(--border2);
+}
+
+.col-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 8px;
+  padding: 8px 18px;
+  border-bottom: 1px solid var(--border2);
+  transition: background .1s;
+}
+.col-row:hover { background: var(--surface3); }
+
+.col-name {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.col-type {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  text-align: right;
+  align-self: center;
+}
+
+.col-note {
+  grid-column: 1 / -1;
+  font-size: 10px;
+  color: var(--text3);
+  line-height: 1.4;
+  padding-top: 1px;
+}
+
+.tag {
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 600;
+  padding: 1px 4px;
+  letter-spacing: .5px;
+}
+.tag-pk { background: var(--amber-glow2); color: var(--amber); border: 1px solid var(--amber-dim); }
+.tag-fk { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(56,189,248,.3); }
+.tag-vt { background: rgba(167,139,250,.1); color: var(--purple); border: 1px solid rgba(167,139,250,.3); }
+
+.panel-security {
+  margin: 12px 18px;
+  padding: 10px 12px;
+  border-left: 3px solid;
+  font-size: 10px;
+  line-height: 1.6;
+}
+.panel-security.warn { border-color: var(--amber); background: var(--amber-glow); color: #c9922a; }
+.panel-security.secure { border-color: var(--green); background: var(--green-dim); color: #4ade80; }
+.panel-security.info { border-color: var(--blue); background: var(--blue-dim); color: var(--blue); }
+
+.panel-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 24px;
+}
+.panel-empty-text {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--text3);
+  text-align: center;
+  line-height: 1.8;
+  text-transform: uppercase;
+}
+
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.status-item {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--text3);
+  padding: 0 14px;
+  border-right: 1px solid var(--border);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+}
+
+.status-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+}
+
+.status-hint {
+  margin-left: auto;
+  border-right: none;
+  border-left: 1px solid var(--border);
+  font-style: italic;
+  text-transform: none;
+  letter-spacing: .5px;
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-brand">
+    <span class="brand-name">ERD V1</span>
+  </div>
+  <div class="header-meta">
+    <div class="meta-item">
+      <span class="meta-label">Schema</span>
+      <span class="meta-value highlight">v5.0</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">tested on</span>
+      <span class="meta-value">Oracle Apex</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Tables</span>
+      <span class="meta-value highlight">12</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Auth</span>
+      <span class="meta-value">Admin-led app control</span>
+    </div>
+  </div>
+  <div class="header-controls">
+    <button class="ctrl-btn" id="btn-zm-out">−</button>
+    <span class="zoom-display" id="zoom-pct">100%</span>
+    <button class="ctrl-btn" id="btn-zm-in">+</button>
+    <button class="ctrl-btn" id="btn-fit">FIT</button>
+    <button class="ctrl-btn" id="btn-reset">RST</button>
+  </div>
+</div>
+
+<div class="section-bar">
+  <button class="sec-btn active" data-section="all">All Tables</button>
+  <button class="sec-btn" data-section="admin">Admin + Audit</button>
+  <button class="sec-btn" data-section="production">Production Runs</button>
+  <button class="sec-btn" data-section="sensors">Sensor Telemetry</button>
+  <button class="sec-btn" data-section="downtime">Downtime</button>
+  <button class="sec-btn" data-section="reports">Reports</button>
+</div>
+
+<div class="main">
+  <div class="canvas-wrap" id="canvas-wrap">
+    <div id="loading">
+      <div class="load-ring"></div>
+      <span class="load-text">Rendering schema</span>
+    </div>
+    <div id="diagram-container">
+      <div class="mermaid" id="mermaid-diagram"></div>
+    </div>
+  </div>
+
+  <div class="detail-panel" id="detail-panel">
+    <div class="panel-header">
+      <div class="panel-eyebrow">Entity Detail</div>
+      <div class="panel-title" id="panel-title">—</div>
+      <div class="panel-desc" id="panel-desc"></div>
+    </div>
+    <div class="panel-body" id="panel-body">
+      <div class="panel-empty">
+        <div class="panel-empty-text">Click any table<br>to inspect columns</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="status-bar">
+  <div class="status-item"><span class="status-dot" style="background:var(--amber)"></span>Identity PKs</div>
+  <div class="status-item"><span class="status-dot" style="background:var(--green)"></span>VIRTUAL duration_mins</div>
+  <div class="status-item"><span class="status-dot" style="background:var(--blue)"></span>CHAR(1) Y/N booleans</div>
+  <div class="status-item"><span class="status-dot" style="background:var(--purple)"></span>Admin top layer</div>
+  <div class="status-item"><span class="status-dot" style="background:var(--red)"></span>No unique keys shown</div>
+  <div class="status-item status-hint">Scroll = zoom · Drag = pan · Click table = inspect</div>
+</div>
+
+<script>
+const DIAGRAMS = {
+  all: `erDiagram
+    DIVU_ADMIN {
+      NUMBER_19 admin_id PK
+      NUMBER_19 uid FK
+      BOOLEAN is_super_admin
+    }
+    DIVU_USERS {
+      NUMBER_19 uid PK
+      VARCHAR2_36 kc_sub
+      VARCHAR2_100 username
+      VARCHAR2_255 email
+      VARCHAR2_10 status
+      TIMESTAMP_WITH_TIME_ZONE created_at
+      TIMESTAMP_WITH_TIME_ZONE updated_at
+    }
+    DIVU_AUDIT_LOGS {
+      NUMBER_19 audit_id PK
+      NUMBER_19 uid FK
+      NUMBER_19 admin_id FK
+      VARCHAR2_50 action
+      VARCHAR2_50 table_affected
+      CLOB old_values
+      CLOB new_values
+      TIMESTAMP_WITH_TIME_ZONE logged_at
+    }
+    DIVU_STATIONS {
+      NUMBER_19 stid PK
+      VARCHAR2_200 name
+      VARCHAR2_50 station_code
+      VARCHAR2_15 status
+      NUMBER_19 uid FK
+    }
+    DIVU_PRODUCTS {
+      NUMBER_19 pid PK
+      VARCHAR2_200 name
+      VARCHAR2_100 sku
+      NUMBER_14_4 target_uph
+      VARCHAR2_15 status
+      NUMBER_19 uid FK
+    }
+    DIVU_PRODUCTION_RUNS {
+      NUMBER_19 rid PK
+      NUMBER_19 stid FK
+      NUMBER_19 pid FK
+      NUMBER_19 uid FK
+      TIMESTAMP_WITH_TIME_ZONE start_time
+      TIMESTAMP_WITH_TIME_ZONE end_time
+      VARCHAR2_15 status
+    }
+    DIVU_SENSOR_STREAMS {
+      NUMBER_19 strid PK
+      NUMBER_19 stid FK
+      VARCHAR2_200 name
+      VARCHAR2_10 protocol
+      VARCHAR2_10 status
+    }
+    DIVU_SENSORS {
+      NUMBER_19 sid PK
+      NUMBER_19 strid FK
+      VARCHAR2_200 name
+      VARCHAR2_80 sensor_type
+      VARCHAR2_15 status
+    }
+    DIVU_SENSOR_READINGS {
+      NUMBER_19 reading_id PK
+      NUMBER_19 sid FK
+      NUMBER_19 rid FK
+      NUMBER value
+      TIMESTAMP_WITH_TIME_ZONE reading_ts
+    }
+    DIVU_DOWNTIME_FACTORS {
+      NUMBER_19 factor_id PK
+      VARCHAR2_200 name
+      VARCHAR2_15 category
+      VARCHAR2_10 severity
+      NUMBER_19 uid FK
+    }
+    DIVU_DOWNTIME_INCIDENTS {
+      NUMBER_19 incident_id PK
+      NUMBER_19 rid FK
+      NUMBER_19 factor_id FK
+      TIMESTAMP_WITH_TIME_ZONE start_time
+      TIMESTAMP_WITH_TIME_ZONE end_time
+      NUMBER_10_2 duration_mins
+      CLOB description
+      NUMBER_19 uid FK
+    }
+    DIVU_REPORTS {
+      NUMBER_19 report_id PK
+      VARCHAR2_15 type
+      VARCHAR2_300 title
+      TIMESTAMP_WITH_TIME_ZONE date_range_start
+      TIMESTAMP_WITH_TIME_ZONE date_range_end
+      NUMBER_19 uid FK
+      NUMBER_19 admin_id FK
+      NUMBER_19 audit_id FK
+      NUMBER_19 stid FK
+      NUMBER_19 pid FK
+      NUMBER_19 run_id FK
+      NUMBER_19 incident_id FK
+      NUMBER_19 factor_id FK
+      NUMBER_19 stream_id FK
+      NUMBER_19 sensor_id FK
+      NUMBER_19 reading_id FK
+      TIMESTAMP_WITH_TIME_ZONE generated_at
+    }
+
+    DIVU_ADMIN ||--|| DIVU_USERS : "admin account"
+    DIVU_ADMIN ||..o{ DIVU_USERS : "creates"
+    DIVU_ADMIN ||--o{ DIVU_ADMIN : "grants admin"
+    DIVU_ADMIN ||--o{ DIVU_AUDIT_LOGS : "oversees"
+    DIVU_USERS ||--o{ DIVU_AUDIT_LOGS : "acts in"
+
+    DIVU_USERS ||--o{ DIVU_STATIONS : "created_by"
+    DIVU_USERS ||--o{ DIVU_PRODUCTS : "created_by"
+    DIVU_STATIONS ||--o{ DIVU_PRODUCTION_RUNS : "hosts"
+    DIVU_PRODUCTS ||--o{ DIVU_PRODUCTION_RUNS : "manufactures"
+    DIVU_USERS ||--o{ DIVU_PRODUCTION_RUNS : "shift lead"
+
+    DIVU_STATIONS ||--o{ DIVU_SENSOR_STREAMS : "has streams"
+    DIVU_SENSOR_STREAMS ||--o{ DIVU_SENSORS : "contains"
+    DIVU_SENSORS ||--o{ DIVU_SENSOR_READINGS : "produces"
+    DIVU_PRODUCTION_RUNS ||--o{ DIVU_SENSOR_READINGS : "collects"
+
+    DIVU_PRODUCTION_RUNS ||--o{ DIVU_DOWNTIME_INCIDENTS : "experiences"
+    DIVU_DOWNTIME_FACTORS ||--o{ DIVU_DOWNTIME_INCIDENTS : "categorises"
+    DIVU_USERS ||--o{ DIVU_DOWNTIME_FACTORS : "created_by"
+    DIVU_USERS ||--o{ DIVU_DOWNTIME_INCIDENTS : "reported_by"
+
+    DIVU_USERS ||--o{ DIVU_REPORTS : "generated_by"
+    DIVU_ADMIN ||--o{ DIVU_REPORTS : "admin_scope"
+    DIVU_AUDIT_LOGS ||--o{ DIVU_REPORTS : "audit_context"
+    DIVU_STATIONS ||--o{ DIVU_REPORTS : "station_scope"
+    DIVU_PRODUCTS ||--o{ DIVU_REPORTS : "product_scope"
+    DIVU_PRODUCTION_RUNS ||--o{ DIVU_REPORTS : "run_scope"
+    DIVU_DOWNTIME_INCIDENTS ||--o{ DIVU_REPORTS : "incident_scope"
+    DIVU_DOWNTIME_FACTORS ||--o{ DIVU_REPORTS : "factor_scope"
+    DIVU_SENSOR_STREAMS ||--o{ DIVU_REPORTS : "stream_scope"
+    DIVU_SENSORS ||--o{ DIVU_REPORTS : "sensor_scope"
+    DIVU_SENSOR_READINGS ||--o{ DIVU_REPORTS : "reading_scope"
+`,
+  admin: `erDiagram
+    DIVU_ADMIN {
+      NUMBER_19 admin_id PK
+      NUMBER_19 uid FK
+      BOOLEAN is_super_admin
+    }
+    DIVU_USERS {
+      NUMBER_19 uid PK
+      VARCHAR2_100 username
+      VARCHAR2_255 email
+      VARCHAR2_10 status
+    }
+    DIVU_AUDIT_LOGS {
+      NUMBER_19 audit_id PK
+      NUMBER_19 uid FK
+      NUMBER_19 admin_id FK
+      VARCHAR2_50 action
+      VARCHAR2_50 table_affected
+      TIMESTAMP_WITH_TIME_ZONE logged_at
+    }
+    DIVU_ADMIN ||--|| DIVU_USERS : "admin account"
+    DIVU_ADMIN ||..o{ DIVU_USERS : "creates"
+    DIVU_ADMIN ||--o{ DIVU_ADMIN : "grants admin"
+    DIVU_ADMIN ||--o{ DIVU_AUDIT_LOGS : "oversees"
+    DIVU_USERS ||--o{ DIVU_AUDIT_LOGS : "acts in"
+`,
+  production: `erDiagram
+    DIVU_USERS {
+      NUMBER_19 uid PK
+      VARCHAR2_100 username
+    }
+    DIVU_STATIONS {
+      NUMBER_19 stid PK
+      VARCHAR2_200 name
+      VARCHAR2_50 station_code
+      VARCHAR2_15 status
+      NUMBER_19 uid FK
+    }
+    DIVU_PRODUCTS {
+      NUMBER_19 pid PK
+      VARCHAR2_200 name
+      VARCHAR2_100 sku
+      NUMBER_14_4 target_uph
+      VARCHAR2_15 status
+      NUMBER_19 uid FK
+    }
+    DIVU_PRODUCTION_RUNS {
+      NUMBER_19 rid PK
+      NUMBER_19 stid FK
+      NUMBER_19 pid FK
+      NUMBER_19 uid FK
+      TIMESTAMP_WITH_TIME_ZONE start_time
+      TIMESTAMP_WITH_TIME_ZONE end_time
+      VARCHAR2_15 status
+    }
+    DIVU_USERS ||--o{ DIVU_STATIONS : "created_by"
+    DIVU_USERS ||--o{ DIVU_PRODUCTS : "created_by"
+    DIVU_STATIONS ||--o{ DIVU_PRODUCTION_RUNS : "hosts"
+    DIVU_PRODUCTS ||--o{ DIVU_PRODUCTION_RUNS : "manufactures"
+    DIVU_USERS ||--o{ DIVU_PRODUCTION_RUNS : "shift lead"
+`,
+  sensors: `erDiagram
+    DIVU_STATIONS {
+      NUMBER_19 stid PK
+      VARCHAR2_200 name
+      VARCHAR2_50 station_code
+    }
+    DIVU_PRODUCTION_RUNS {
+      NUMBER_19 rid PK
+      NUMBER_19 stid FK
+      NUMBER_19 pid FK
+      TIMESTAMP_WITH_TIME_ZONE start_time
+      VARCHAR2_15 status
+    }
+    DIVU_SENSOR_STREAMS {
+      NUMBER_19 strid PK
+      NUMBER_19 stid FK
+      VARCHAR2_200 name
+      VARCHAR2_10 protocol
+      VARCHAR2_10 status
+    }
+    DIVU_SENSORS {
+      NUMBER_19 sid PK
+      NUMBER_19 strid FK
+      VARCHAR2_200 name
+      VARCHAR2_80 sensor_type
+      VARCHAR2_15 status
+    }
+    DIVU_SENSOR_READINGS {
+      NUMBER_19 reading_id PK
+      NUMBER_19 sid FK
+      NUMBER_19 rid FK
+      NUMBER value
+      TIMESTAMP_WITH_TIME_ZONE reading_ts
+    }
+    DIVU_STATIONS ||--o{ DIVU_SENSOR_STREAMS : "has streams"
+    DIVU_SENSOR_STREAMS ||--o{ DIVU_SENSORS : "contains"
+    DIVU_SENSORS ||--o{ DIVU_SENSOR_READINGS : "produces"
+    DIVU_PRODUCTION_RUNS ||--o{ DIVU_SENSOR_READINGS : "collects"
+    DIVU_STATIONS ||--o{ DIVU_PRODUCTION_RUNS : "hosts"
+`,
+  downtime: `erDiagram
+    DIVU_USERS {
+      NUMBER_19 uid PK
+      VARCHAR2_100 username
+    }
+    DIVU_PRODUCTION_RUNS {
+      NUMBER_19 rid PK
+      NUMBER_19 stid FK
+      NUMBER_19 pid FK
+      TIMESTAMP_WITH_TIME_ZONE start_time
+      TIMESTAMP_WITH_TIME_ZONE end_time
+      VARCHAR2_15 status
+    }
+    DIVU_DOWNTIME_FACTORS {
+      NUMBER_19 factor_id PK
+      VARCHAR2_200 name
+      VARCHAR2_15 category
+      VARCHAR2_10 severity
+      NUMBER_19 uid FK
+    }
+    DIVU_DOWNTIME_INCIDENTS {
+      NUMBER_19 incident_id PK
+      NUMBER_19 rid FK
+      NUMBER_19 factor_id FK
+      TIMESTAMP_WITH_TIME_ZONE start_time
+      TIMESTAMP_WITH_TIME_ZONE end_time
+      NUMBER_10_2 duration_mins
+      CLOB description
+      NUMBER_19 uid FK
+    }
+    DIVU_PRODUCTION_RUNS ||--o{ DIVU_DOWNTIME_INCIDENTS : "experiences"
+    DIVU_DOWNTIME_FACTORS ||--o{ DIVU_DOWNTIME_INCIDENTS : "categorises"
+    DIVU_USERS ||--o{ DIVU_DOWNTIME_FACTORS : "created_by"
+    DIVU_USERS ||--o{ DIVU_DOWNTIME_INCIDENTS : "reported_by"
+`,
+  reports: `erDiagram
+    DIVU_REPORTS {
+      NUMBER_19 report_id PK
+      VARCHAR2_15 type
+      VARCHAR2_300 title
+      TIMESTAMP_WITH_TIME_ZONE date_range_start
+      TIMESTAMP_WITH_TIME_ZONE date_range_end
+      NUMBER_19 uid FK
+      NUMBER_19 admin_id FK
+      NUMBER_19 audit_id FK
+      NUMBER_19 stid FK
+      NUMBER_19 pid FK
+      NUMBER_19 run_id FK
+      NUMBER_19 incident_id FK
+      NUMBER_19 factor_id FK
+      NUMBER_19 stream_id FK
+      NUMBER_19 sensor_id FK
+      NUMBER_19 reading_id FK
+      TIMESTAMP_WITH_TIME_ZONE generated_at
+    }
+    DIVU_USERS {
+      NUMBER_19 uid PK
+      VARCHAR2_100 username
+    }
+    DIVU_ADMIN { NUMBER_19 admin_id PK NUMBER_19 uid FK }
+    DIVU_AUDIT_LOGS { NUMBER_19 audit_id PK NUMBER_19 uid FK NUMBER_19 admin_id FK }
+    DIVU_STATIONS { NUMBER_19 stid PK VARCHAR2_200 name }
+    DIVU_PRODUCTS { NUMBER_19 pid PK VARCHAR2_200 name }
+    DIVU_PRODUCTION_RUNS { NUMBER_19 rid PK NUMBER_19 stid FK NUMBER_19 pid FK }
+    DIVU_DOWNTIME_INCIDENTS { NUMBER_19 incident_id PK NUMBER_19 rid FK NUMBER_19 factor_id FK }
+    DIVU_DOWNTIME_FACTORS { NUMBER_19 factor_id PK VARCHAR2_200 name }
+    DIVU_SENSOR_STREAMS { NUMBER_19 strid PK NUMBER_19 stid FK }
+    DIVU_SENSORS { NUMBER_19 sid PK NUMBER_19 strid FK }
+    DIVU_SENSOR_READINGS { NUMBER_19 reading_id PK NUMBER_19 sid FK NUMBER_19 rid FK }
+
+    DIVU_USERS ||--o{ DIVU_REPORTS : "generated_by"
+    DIVU_ADMIN ||--o{ DIVU_REPORTS : "admin_scope"
+    DIVU_AUDIT_LOGS ||--o{ DIVU_REPORTS : "audit_context"
+    DIVU_STATIONS ||--o{ DIVU_REPORTS : "station_scope"
+    DIVU_PRODUCTS ||--o{ DIVU_REPORTS : "product_scope"
+    DIVU_PRODUCTION_RUNS ||--o{ DIVU_REPORTS : "run_scope"
+    DIVU_DOWNTIME_INCIDENTS ||--o{ DIVU_REPORTS : "incident_scope"
+    DIVU_DOWNTIME_FACTORS ||--o{ DIVU_REPORTS : "factor_scope"
+    DIVU_SENSOR_STREAMS ||--o{ DIVU_REPORTS : "stream_scope"
+    DIVU_SENSORS ||--o{ DIVU_REPORTS : "sensor_scope"
+    DIVU_SENSOR_READINGS ||--o{ DIVU_REPORTS : "reading_scope"
+`,
+};
+
+let scale = 1, panX = 0, panY = 0;
+let isDragging = false, startX, startY, panStartX, panStartY;
+const container  = document.getElementById('diagram-container');
+const canvasWrap = document.getElementById('canvas-wrap');
+const zoomPct    = document.getElementById('zoom-pct');
+
+function applyTransform() {
+  container.style.transform = `translate(${panX}px,${panY}px) scale(${scale})`;
+  zoomPct.textContent = Math.round(scale * 100) + '%';
+}
+function setZoom(s, cx, cy) {
+  const rect = canvasWrap.getBoundingClientRect();
+  const ox = (cx ?? rect.width / 2) - rect.left;
+  const oy = (cy ?? rect.height / 2) - rect.top;
+  const prev = scale;
+  scale = Math.max(0.1, Math.min(3, s));
+  panX = ox - (ox - panX) * (scale / prev);
+  panY = oy - (oy - panY) * (scale / prev);
+  applyTransform();
+}
+function fitDiagram() {
+  const svg = container.querySelector('svg');
+  if (!svg) return;
+  const w = canvasWrap.getBoundingClientRect();
+  const sw = svg.getBoundingClientRect().width / scale;
+  const sh = svg.getBoundingClientRect().height / scale;
+  const panelW = document.getElementById('detail-panel').classList.contains('collapsed') ? 0 : 320;
+  const availW = w.width - panelW - 80;
+  const s = Math.min(availW / sw, (w.height - 80) / sh, 2);
+  scale = Math.max(0.1, s);
+  panX = (availW - sw * scale) / 2 + 40;
+  panY = (w.height - sh * scale) / 2;
+  applyTransform();
+}
+
+document.getElementById('btn-zm-in').addEventListener('click', () => setZoom(scale * 1.2));
+document.getElementById('btn-zm-out').addEventListener('click', () => setZoom(scale * 0.83));
+document.getElementById('btn-reset').addEventListener('click', () => { scale = 1; panX = 0; panY = 0; applyTransform(); });
+document.getElementById('btn-fit').addEventListener('click', fitDiagram);
+canvasWrap.addEventListener('wheel', e => {
+  e.preventDefault();
+  setZoom(scale * (e.deltaY < 0 ? 1.1 : 0.91), e.clientX, e.clientY);
+}, { passive: false });
+canvasWrap.addEventListener('mousedown', e => {
+  if (e.button !== 0) return;
+  isDragging = true;
+  startX = e.clientX; startY = e.clientY;
+  panStartX = panX; panStartY = panY;
+  canvasWrap.classList.add('panning');
+});
+window.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  panX = panStartX + e.clientX - startX;
+  panY = panStartY + e.clientY - startY;
+  applyTransform();
+});
+window.addEventListener('mouseup', () => { isDragging = false; canvasWrap.classList.remove('panning'); });
+
+function showPanel(name) {
+  const d = TABLES[name];
+  if (!d) return;
+  document.getElementById('panel-title').textContent = name;
+  document.getElementById('panel-desc').textContent = d.desc;
+  const tagHtml = tags => tags.map(t => `<span class="tag tag-${t}">${t.toUpperCase()}</span>`).join('');
+  let html = `<div class="col-section-label">Columns · ${d.cols.length}</div>`;
+  d.cols.forEach(c => {
+    html += `<div class="col-row"><div class="col-name">${c.name} ${tagHtml(c.tags || [])}</div><div class="col-type">${c.type}</div>${c.note ? `<div class="col-note">${c.note}</div>` : ''}</div>`;
+  });
+  if (d.security) {
+    const cls = d.security.type === 'secure' ? 'secure' : d.security.type === 'info' ? 'info' : 'warn';
+    const icon = d.security.type === 'secure' ? '✓' : d.security.type === 'info' ? 'i' : '⚠';
+    html += `<div class="panel-security ${cls}">[${icon}] ${d.security.text}</div>`;
+  }
+  document.getElementById('panel-body').innerHTML = html;
+}
+
+function attachTableListeners() {
+  const svg = container.querySelector('svg');
+  if (!svg) return;
+  svg.querySelectorAll('g').forEach(g => {
+    const texts = g.querySelectorAll('text, .er.entityLabel');
+    let name = null;
+    texts.forEach(t => {
+      const candidate = t.textContent?.trim().toUpperCase();
+      if (TABLES[candidate]) name = candidate;
+    });
+    if (!name) return;
+    const clickable = g.querySelector('.er.entityBox, rect');
+    if (!clickable) return;
+    clickable.style.cursor = 'pointer';
+    g.addEventListener('click', e => { e.stopPropagation(); showPanel(name); });
+  });
+}
+
+async function renderDiagram(section) {
+  document.getElementById('loading').style.display = 'flex';
+  const el = document.getElementById('mermaid-diagram');
+  el.removeAttribute('data-processed');
+  el.innerHTML = DIAGRAMS[section];
+  try { await mermaid.run({ nodes: [el] }); } catch (e) { console.error(e); }
+  document.getElementById('loading').style.display = 'none';
+  attachTableListeners();
+  setTimeout(fitDiagram, 80);
+}
+
+document.querySelectorAll('.sec-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sec-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderDiagram(btn.dataset.section);
+  });
+});
+
+try {
+  if (!window.mermaid) throw new Error('Mermaid failed to load');
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'dark',
+  er: {
+    diagramPadding: 32,
+    layoutDirection: 'TB',
+    minEntityWidth: 110,
+    minEntityHeight: 70,
+    entityPadding: 14,
+    useMaxWidth: false,
+  },
+  themeVariables: {
+    background: '#0a0c0e',
+    primaryColor: '#141719',
+    primaryTextColor: '#d4d8db',
+    primaryBorderColor: '#f59e0b',
+    lineColor: '#f59e0b',
+    secondaryColor: '#0f1214',
+    tertiaryColor: '#0a0c0e',
+    edgeLabelBackground: '#0a0c0e',
+    attributeBackgroundColorEven: '#141719',
+    attributeBackgroundColorOdd: '#0f1214',
+    fontFamily: '"IBM Plex Mono", monospace',
+  }
+});
+} catch (e) {
+  console.error(e);
+  const loading = document.getElementById('loading');
+  if (loading) {
+    const ring = loading.querySelector('.load-ring');
+    if (ring) ring.style.display = 'none';
+    const txt = loading.querySelector('.load-text');
+    if (txt) txt.textContent = 'Diagram renderer failed to load (check internet/CDN access)';
+  }
+}
+renderDiagram('all');
+</script>
+
+<div style="position:fixed; right:10px; bottom:40px; background:#0f1214; border:1px solid #252b2f; padding:12px 14px; font-family:IBM Plex Mono, monospace; font-size:11px; color:#d4d8db; line-height:1.6; max-width:300px;">
+<b>Key Naming Legend</b><br>
+admin_id = Admin Function ID (DIVU_ADMIN primary key)<br>
+uid = User ID (DIVU_USERS primary key)<br>
+audit_id = Audit Log ID (DIVU_AUDIT_LOGS primary key)<br>
+pid = Product ID (DIVU_PRODUCTS primary key)<br>
+sid = Sensor ID (DIVU_SENSORS primary key)<br>
+stid = Station ID (DIVU_STATIONS primary key)<br>
+rid = Production Run ID (DIVU_PRODUCTION_RUNS primary key)<br>
+strid = Sensor Stream ID (DIVU_SENSOR_STREAMS primary key)<br>
+reading_id = Sensor Reading ID (DIVU_SENSOR_READINGS primary key)<br>
+factor_id = Downtime Factor ID (DIVU_DOWNTIME_FACTORS primary key)<br>
+incident_id = Downtime Incident ID (DIVU_DOWNTIME_INCIDENTS primary key)<br>
+report_id = Report ID (DIVU_REPORTS primary key)<br><br>
+Foreign keys reuse the same parent identifier name where possible for clarity.
+</div>
+</body>
+</html>
